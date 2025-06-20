@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Réseau W-S Adapté</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals (Calm Harmony) -->
+    <!-- Application Structure Plan: A focused, single-page application dedicated to the Adapted Watts-Strogatz model. Structure: 1. Hero introducing the model's superiority. 2. "The Foundation" section explaining the 'regular ring lattice' with a static visual. 3. The core "Interactive Generator" section, with controls (N, k, beta) and a canvas for dynamic network visualization. 4. "Analysis & Insights" section to display calculated metrics (L, C) and explain parameter tuning. This top-to-bottom flow serves as a tutorial, moving from concept to hands-on practice and then to analysis, providing a deep, focused learning experience on the single best algorithm. -->
+    <!-- Visualization & Content Choices: Report Info: Adapted W-S Algorithm -> Goal: Inform & Interact -> Viz: Interactive HTML/Canvas visualization. Interaction: User sets N, k, β and clicks "Generate". The canvas draws the initial lattice, then animates the attribute-based rewiring of edges. Justification: A dynamic canvas visualization is the most effective way to demonstrate the algorithm's two-step process (lattice + rewiring) and the concept of strategic "innovation bridges". Report Info: Network metrics L and C -> Goal: Analyze -> Viz: Dynamic text readouts. Interaction: Metrics are calculated and displayed after generation. Justification: Provides immediate quantitative feedback on the structure created by the user's chosen parameters. Library/Method: Pure HTML/CSS and Canvas 2D API for all visuals. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8F5F2;
+            color: #4A4A4A;
+        }
+        .param-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #D8734B;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        .param-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #D8734B;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 0;
+        }
+        canvas {
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <main class="container mx-auto px-4 py-8 md:py-12">
+
+        <header class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#D8734B] mb-4">Le Modèle W-S Adapté</h1>
+            <p class="text-lg md:text-xl max-w-3xl mx-auto text-gray-600">Explorez l'algorithme le plus sophistiqué pour l'ingénierie de l'intelligence collective : une approche hybride qui équilibre exploration locale et innovation globale.</p>
+        </header>
+
+        <section id="fondation" class="mb-16">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold">Étape 1 : La Fondation - Le Treillis Régulier</h2>
+                <p class="max-w-3xl mx-auto mt-2 text-gray-600">Tout commence par une structure "parfaitement" inefficace. Un treillis en anneau où chaque personne n'est liée qu'à ses plus proches voisins. Cette structure ralentit la propagation des idées, protégeant ainsi l'exploration créative au sein de petits groupes soudés.</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm grid md:grid-cols-2 gap-8 items-center">
+                <div class="relative h-64 w-64 mx-auto" id="lattice-viz">
+                </div>
+                <div>
+                    <h3 class="text-2xl font-semibold text-[#6C8EAD] mb-3">Caractéristiques Clés</h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <span class="text-green-500 font-bold mr-2">&#10003;</span>
+                            <div><strong class="block">Coefficient de Clustering (C) Élevé :</strong> Favorise la confiance et le renforcement des idées au sein de petits groupes.</div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 font-bold mr-2">&#10003;</span>
+                             <div><strong class="block">Longueur de Chemin (L) Élevée :</strong> Empêche la convergence prématurée vers des solutions sous-optimales.</div>
+                        </li>
+                         <li class="flex items-start">
+                             <span class="text-red-500 font-bold mr-2">&times;</span>
+                             <div><strong class="block">Manque de Ponts d'Innovation :</strong> Sans liens à longue portée, le réseau reste piégé dans des "silos" de connaissances.</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="generateur" class="mb-16">
+             <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold">Étape 2 : L'Algorithme - Générateur Interactif</h2>
+                <p class="max-w-3xl mx-auto mt-2 text-gray-600">Ajustez les paramètres et générez votre propre réseau. Observez comment le recâblage "intelligent" (en orange) crée des ponts stratégiques entre les individus les plus dissemblables, transformant le treillis en un puissant moteur d'innovation.</p>
+            </div>
+            <div class="grid lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1 bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-bold mb-6">Paramètres du Réseau</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <label for="nodes" class="block font-semibold mb-1">Participants (N): <span id="nodes-value">24</span></label>
+                            <input type="range" id="nodes" min="10" max="40" value="24" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer param-slider">
+                        </div>
+                        <div>
+                            <label for="neighbors" class="block font-semibold mb-1">Voisins (k): <span id="neighbors-value">4</span></label>
+                            <input type="range" id="neighbors" min="2" max="8" step="2" value="4" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer param-slider">
+                        </div>
+                        <div>
+                             <label for="beta" class="block font-semibold mb-1">Prob. Recâblage (β): <span id="beta-value">0.05</span></label>
+                            <input type="range" id="beta" min="0" max="0.3" step="0.01" value="0.05" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer param-slider">
+                        </div>
+                    </div>
+                    <div class="mt-8">
+                         <button id="generate-btn" class="w-full bg-[#D8734B] text-white font-bold py-3 px-4 rounded-lg hover:bg-opacity-90 transition-colors">Générer le Réseau</button>
+                    </div>
+                </div>
+                <div class="lg:col-span-2">
+                    <canvas id="networkCanvas" width="600" height="450"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="analyse">
+             <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold">Étape 3 : Analyse & Interprétation</h2>
+                <p class="max-w-3xl mx-auto mt-2 text-gray-600">Chaque réseau généré a un profil unique. Les métriques ci-dessous vous aident à comprendre comment vos choix de paramètres façonnent la structure et, par conséquent, sa capacité à résoudre des problèmes complexes.</p>
+            </div>
+             <div class="bg-white p-6 rounded-lg shadow-sm grid md:grid-cols-3 gap-6 text-center">
+                 <div>
+                     <h4 class="text-lg font-semibold text-gray-500">Coefficient de Clustering (C)</h4>
+                     <p id="c-value" class="text-3xl font-bold text-[#6C8EAD]">--</p>
+                     <p class="text-xs text-gray-500 mt-1">Cohésion locale</p>
+                 </div>
+                 <div>
+                    <h4 class="text-lg font-semibold text-gray-500">Longueur de Chemin (L)</h4>
+                     <p id="l-value" class="text-3xl font-bold text-[#6C8EAD]">--</p>
+                     <p class="text-xs text-gray-500 mt-1">Efficacité globale</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-500">Ponts d'Innovation Créés</h4>
+                     <p id="rewired-value" class="text-3xl font-bold text-[#D8734B]">--</p>
+                     <p class="text-xs text-gray-500 mt-1">Liens hétérophiles</p>
+                </div>
+             </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white">
+        <div class="container mx-auto px-6 py-8 text-center">
+            <p>&copy; 2025 Projet "Innovons Ensemble". Tous droits réservés.</p>
+            <p class="text-sm text-gray-400 mt-2">Pour toute question, contactez-nous : <a href="mailto:[alexandre.hersent@ensta-paris.fr]" class="underline hover:text-blue-300">[alexandre.hersent@ensta-paris.fr]</a></p>
+        </div>
+    </footer>
+
+    <script>
+        const nodesSlider = document.getElementById('nodes');
+        const neighborsSlider = document.getElementById('neighbors');
+        const betaSlider = document.getElementById('beta');
+        const nodesValue = document.getElementById('nodes-value');
+        const neighborsValue = document.getElementById('neighbors-value');
+        const betaValue = document.getElementById('beta-value');
+        const generateBtn = document.getElementById('generate-btn');
+        const canvas = document.getElementById('networkCanvas');
+        const ctx = canvas.getContext('2d');
+
+        nodesSlider.oninput = () => { nodesValue.textContent = nodesSlider.value; };
+        neighborsSlider.oninput = () => { neighborsValue.textContent = neighborsSlider.value; };
+        betaSlider.oninput = () => { betaValue.textContent = betaSlider.value; };
+
+        function drawStaticLattice() {
+            const container = document.getElementById('lattice-viz');
+            container.innerHTML = '';
+            const n = 12;
+            const k = 4;
+            const radius = 100;
+            const centerX = 128;
+            const centerY = 128;
+
+            for (let i = 0; i < n; i++) {
+                const angle = (i / n) * 2 * Math.PI;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = 'absolute w-4 h-4 bg-[#6C8EAD] rounded-full transform -translate-x-1/2 -translate-y-1/2';
+                nodeDiv.style.left = `${x}px`;
+                nodeDiv.style.top = `${y}px`;
+                container.appendChild(nodeDiv);
+            }
+
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute('class', 'absolute top-0 left-0 w-full h-full');
+
+            for (let i = 0; i < n; i++) {
+                for (let j = 1; j <= k / 2; j++) {
+                    const neighborIndex = (i + j) % n;
+                    const angle1 = (i / n) * 2 * Math.PI;
+                    const x1 = centerX + radius * Math.cos(angle1);
+                    const y1 = centerY + radius * Math.sin(angle1);
+                    const angle2 = (neighborIndex / n) * 2 * Math.PI;
+                    const x2 = centerX + radius * Math.cos(angle2);
+                    const y2 = centerY + radius * Math.sin(angle2);
+
+                    const line = document.createElementNS(svgNS, 'line');
+                    line.setAttribute('x1', x1);
+                    line.setAttribute('y1', y1);
+                    line.setAttribute('x2', x2);
+                    line.setAttribute('y2', y2);
+                    line.setAttribute('stroke', '#A0AEC0');
+                    line.setAttribute('stroke-width', '1.5');
+                    svg.appendChild(line);
+                }
+            }
+            container.appendChild(svg);
+        }
+
+        function drawNetwork(nodes, adj) {
+            const width = canvas.width;
+            const height = canvas.height;
+            const radius = Math.min(width, height) / 2 - 30;
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            ctx.clearRect(0, 0, width, height);
+
+            nodes.forEach((node, i) => {
+                const angle = (i / nodes.length) * 2 * Math.PI - Math.PI / 2;
+                node.x = centerX + radius * Math.cos(angle);
+                node.y = centerY + radius * Math.sin(angle);
+            });
+
+            for (let i = 0; i < adj.length; i++) {
+                for (let j = i + 1; j < adj[i].length; j++) {
+                    if (adj[i][j]) {
+                        ctx.beginPath();
+                        ctx.moveTo(nodes[i].x, nodes[i].y);
+                        ctx.lineTo(nodes[j].x, nodes[j].y);
+                        ctx.strokeStyle = adj[i][j] === 2 ? '#D8734B' : '#A0AEC0'; // Orange for rewired
+                        ctx.lineWidth = adj[i][j] === 2 ? 2.5 : 1.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            nodes.forEach(node => {
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = '#6C8EAD';
+                ctx.fill();
+            });
+        }
+
+        function calculateClustering(adj, n) {
+            let totalC = 0;
+            if (n === 0) return '0.000';
+
+            for (let i = 0; i < n; i++) {
+                const neighbors = [];
+                for (let j = 0; j < n; j++) {
+                    if (adj[i][j]) neighbors.push(j);
+                }
+                const k = neighbors.length;
+                if (k < 2) continue;
+
+                let links = 0;
+                for (let j = 0; j < k; j++) {
+                    for (let l = j + 1; l < k; l++) {
+                        if (adj[neighbors[j]][neighbors[l]]) {
+                            links++;
+                        }
+                    }
+                }
+                totalC += (2 * links) / (k * (k - 1));
+            }
+            return (totalC / n).toFixed(3);
+        }
+
+        function calculateMetrics(adj) {
+            const n = adj.length;
+            if (n <= 1) return { L: '0.00', C: '0.000' };
+
+            let totalPathLength = 0;
+            let reachablePairCount = 0;
+
+            for (let startNode = 0; startNode < n; startNode++) {
+                // Standard Breadth-First Search (BFS)
+                const q = [[startNode, 0]]; // Queue: [currentNode, distance]
+                const visited = { [startNode]: 0 }; // Visited nodes and their distances
+                let head = 0;
+
+                while (head < q.length) {
+                    const [u, dist] = q[head++];
+
+                    for (let v = 0; v < n; v++) {
+                        // Check for an edge from u to v AND if v hasn't been visited in this BFS
+                        if (adj[u][v] && !(v in visited)) {
+                            visited[v] = dist + 1;
+                            q.push([v, dist + 1]);
+                        }
+                    }
+                }
+
+                // If the number of visited nodes is less than N, the graph is disconnected
+                if (Object.keys(visited).length < n) {
+                    const C = calculateClustering(adj, n);
+                    return { L: '∞', C }; // Return infinity for L
+                }
+
+                // Accumulate distances from startNode to all other visited nodes
+                for (const node in visited) {
+                    if (parseInt(node) !== startNode) {
+                         totalPathLength += visited[node];
+                         reachablePairCount++;
+                    }
+                }
+            }
+
+            const L = reachablePairCount > 0 ? (totalPathLength / reachablePairCount).toFixed(2) : '0.00';
+            const C = calculateClustering(adj, n);
+
+            return { L, C };
+        }
+
+
+        generateBtn.onclick = () => {
+            const N = parseInt(nodesSlider.value);
+            const K = parseInt(neighborsSlider.value);
+            const BETA = parseFloat(betaSlider.value);
+
+            let rewiredCount = 0;
+
+            document.getElementById('c-value').textContent = '...';
+            document.getElementById('l-value').textContent = '...';
+            document.getElementById('rewired-value').textContent = '...';
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'Génération...';
+
+            setTimeout(() => {
+                const nodes = Array.from({ length: N }, () => ({
+                    attrs: [Math.random(), Math.random(), Math.random()]
+                }));
+
+                const adj = Array.from({ length: N }, () => new Array(N).fill(0));
+
+                for (let i = 0; i < N; i++) {
+                    for (let j = 1; j <= K / 2; j++) {
+                        const neighbor = (i + j) % N;
+                        adj[i][neighbor] = 1;
+                        adj[neighbor][i] = 1;
+                    }
+                }
+
+                const initialAdj = JSON.parse(JSON.stringify(adj));
+
+                for (let i = 0; i < N; i++) {
+                    for (let j = i + 1; j < N; j++) {
+                        if (initialAdj[i][j] && Math.random() < BETA) {
+
+                            adj[i][j] = 0;
+                            adj[j][i] = 0;
+
+                            let maxDist = -1;
+                            let newNeighbor = -1;
+
+                            const i_attrs = nodes[i].attrs;
+
+                            for (let k = 0; k < N; k++) {
+                                if (k !== i && !adj[i][k]) {
+                                    const k_attrs = nodes[k].attrs;
+                                    const dist = Math.sqrt(
+                                        Math.pow(i_attrs[0] - k_attrs[0], 2) +
+                                        Math.pow(i_attrs[1] - k_attrs[1], 2) +
+                                        Math.pow(i_attrs[2] - k_attrs[2], 2)
+                                    );
+                                    if(dist > maxDist){
+                                        maxDist = dist;
+                                        newNeighbor = k;
+                                    }
+                                }
+                            }
+
+                            if(newNeighbor !== -1){
+                                adj[i][newNeighbor] = 2; // Mark as rewired
+                                adj[newNeighbor][i] = 2; // Mark as rewired
+                                rewiredCount++;
+                            } else {
+                                adj[i][j] = 1;
+                                adj[j][i] = 1;
+                            }
+                        }
+                    }
+                }
+
+                drawNetwork(nodes, adj);
+                const metrics = calculateMetrics(adj);
+                document.getElementById('c-value').textContent = metrics.C;
+                document.getElementById('l-value').textContent = metrics.L;
+                document.getElementById('rewired-value').textContent = rewiredCount;
+
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'Générer le Réseau';
+            }, 100);
+        };
+
+        window.onload = () => {
+            drawStaticLattice();
+            generateBtn.click();
+        };
+    </script>
+</body>
+</html>
